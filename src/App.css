@@ -1,0 +1,19 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+body {
+  background: #1e1d1d;
+}
+
+.lightswitch {
+  background-image: url("/src/assets/light_switch.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  padding: 124px 96px;
+  height: 301px;
+  display: inline-block;
+}
