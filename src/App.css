@@ -17,3 +17,13 @@ body {
   height: 301px;
   display: inline-block;
 }
+
+.calculator-root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.calculator-root > div:last-child {
+  margin-left: 16px;
+  width: 300px;
+}

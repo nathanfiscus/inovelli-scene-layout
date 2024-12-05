@@ -1,9 +1,16 @@
 import React from "react";
 import _, { matches, max } from "lodash";
-import IconButton from "@mui/material/IconButton";
 import { Responsive, WidthProvider } from "react-grid-layout";
-import { Close } from "@mui/icons-material";
+import {
+  Close,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+  ToggleOn,
+  Tune,
+} from "@mui/icons-material";
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
+import ValidLayouts from "./layouts.json";
+import { TextField, Tooltip } from "@mui/material";
 
 class ToolBoxItem extends React.Component {
   render() {
@@ -57,9 +64,76 @@ export default class ToolboxLayout extends React.Component {
     this.setState({ mounted: true });
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    //Determine layout match
+    if (prevState.layouts.lg !== this.state.layouts.lg) {
+      const SELECTED_LAYOUT = ValidLayouts.findIndex((layout) => {
+        return (
+          layout.length ===
+          layout.filter((button) =>
+            this.state.layouts.lg.find(
+              (i) =>
+                i.x === button.x &&
+                i.y === button.y &&
+                i.h === button.h &&
+                i.w === button.w
+            )
+          ).length
+        );
+      });
+      this.setState({ selectedLayout: SELECTED_LAYOUT });
+    }
+  }
+
   generateDOM() {
-    return _.map(this.state.layouts[this.state.currentBreakpoint], (l) => {
-      return <div key={l.i} style={{ background: "#acaeae" }}></div>;
+    return _.map(this.state.layouts.lg, (l) => {
+      const type =
+        this.state.selectedLayout > -1
+          ? ValidLayouts[this.state.selectedLayout].find(
+              (i) => i.x === l.x && i.y === l.y && i.w === l.w && l.h === i.h
+            )?.type || ""
+          : "";
+      return (
+        <div
+          key={l.i}
+          style={{
+            background: "#acaeae",
+            display: "flex",
+            justifyContent: "left",
+            alignItems: "top",
+          }}
+        >
+          <span style={{ padding: "5px" }}>
+            {type === "config" ? (
+              <Tooltip title="Configuration">
+                <span>
+                  <Tune style={{ opacity: "0.3" }} />
+                </span>
+              </Tooltip>
+            ) : type === "up" ? (
+              <Tooltip title="Load Up">
+                <span>
+                  <KeyboardArrowUp style={{ opacity: "0.3" }} />
+                </span>
+              </Tooltip>
+            ) : type === "down" ? (
+              <Tooltip title="Load Down">
+                <span>
+                  <KeyboardArrowDown style={{ opacity: "0.3" }} />
+                </span>
+              </Tooltip>
+            ) : type === "toggle" ? (
+              <Tooltip title="Load Toggle">
+                <span>
+                  <ToggleOn style={{ opacity: "0.3" }} />
+                </span>
+              </Tooltip>
+            ) : (
+              ""
+            )}
+          </span>
+        </div>
+      );
     });
   }
 
@@ -190,31 +264,41 @@ export default class ToolboxLayout extends React.Component {
 
   render() {
     return (
-      <div className="lightswitch">
-        <div
-          style={{
-            height: "302px",
-            width: "141px",
-            background: "#1e1d1d",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <ResponsiveReactGridLayout
-            {...this.props}
-            layouts={this.state.layouts}
-            onLayoutChange={this.onLayoutChange}
-            measureBeforeMount={false}
-            useCSSTransforms={this.state.mounted}
-            compactType={"vertical"}
-            preventCollision={false}
-            isBounded={false}
-            autoSize={false}
-            margin={[2, 2]}
-            rowHeight={73}
+      <div className="calculator-root">
+        <div className="lightswitch">
+          <div
+            style={{
+              height: "302px",
+              width: "141px",
+              background: "#1e1d1d",
+              position: "relative",
+              overflow: "hidden",
+            }}
           >
-            {this.generateDOM()}
-          </ResponsiveReactGridLayout>
+            <ResponsiveReactGridLayout
+              {...this.props}
+              layouts={this.state.layouts}
+              onLayoutChange={this.onLayoutChange}
+              measureBeforeMount={false}
+              useCSSTransforms={this.state.mounted}
+              compactType={"vertical"}
+              preventCollision={false}
+              isBounded={false}
+              autoSize={false}
+              margin={[2, 2]}
+              rowHeight={73}
+            >
+              {this.generateDOM()}
+            </ResponsiveReactGridLayout>
+          </div>
+        </div>
+        <div>
+          <TextField
+            label="Layout (Parameter 170)"
+            value={this.state.selectedLayout + 1 || "Unsupported"}
+            readOnly={true}
+            fullWidth
+          />
         </div>
       </div>
     );
