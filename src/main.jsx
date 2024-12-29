@@ -10,6 +10,7 @@ import "../node_modules/react-resizable/css/styles.css";
 const theme = createTheme({
   palette: {
     mode: "dark",
+    text: { primary: "#ffffff", secondary: "rgba(255, 255, 255, 0.7)" },
   },
 });
 
