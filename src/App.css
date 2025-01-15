@@ -32,11 +32,35 @@ body {
   margin-top: 16px;
 }
 
-.parameterWrapper {
+.areaConfigurationWrapper {
   display: flex;
   flex-direction: column;
+  text-align: left;
+  padding: 16px;
+  transition: all cubic-bezier(0.19, 1, 0.22, 1) !important;
+}
+
+.areaConfigurationWrapper > * {
+  margin-bottom: 16px !important;
+}
+
+.parameterWrapper {
+  align-items: center;
+  /* justify-content: center; */
+  display: flex;
+  padding: 16px;
+  flex-wrap: wrap;
+  max-width: 800px;
+  margin: auto;
 }
 
 .parameterWrapper > * {
+  flex: 1 1 49%;
   margin-bottom: 16px !important;
+  max-width: 350px;
+}
+
+.parameterWrapper > :first-child,
+.parameterWrapper > :nth-child(3) {
+  margin-right: 16px;
 }

@@ -6,10 +6,14 @@ export default function TextStatus(props) {
   return (
     <div
       style={{
-        alignSelf: "center",
-        justifySelf: "center",
+        alignSelf: "top",
+        justifySelf: "left",
         padding: 5,
         userSelect: "none",
+        marginTop: 25,
+        width: "100%",
+        textAlign: "left",
+        paddingLeft: "10px",
       }}
     >
       <Typography

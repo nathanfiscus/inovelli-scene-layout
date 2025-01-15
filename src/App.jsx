@@ -19,6 +19,11 @@ import {
   Tooltip,
   Typography,
   Radio,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  Paper,
 } from "@mui/material";
 import LoadLevelIndicator from "./LoadLevelIndicator.jsx";
 import TextStatus from "./TextStatus.jsx";
@@ -38,6 +43,13 @@ export default class ToolboxLayout extends React.Component {
     mounted: false,
     layout: this.props.initialLayout,
     buttonConfig: this.props.initialLayout.map((i) => ({
+      i: i.i,
+      buttonLightType: 0,
+      indicator: 0,
+      type: "none",
+      text: "",
+    })),
+    ledConfig: this.props.initialLayout.map((i) => ({
       i: i.i,
       buttonLightType: 0,
       indicator: 0,
@@ -72,13 +84,6 @@ export default class ToolboxLayout extends React.Component {
 
   generateDOM() {
     return _.map(this.state.layout, (l) => {
-      const type =
-        this.state.selectedLayout > -1
-          ? Validlayout[this.state.selectedLayout].find(
-              (i) => i.x === l.x && i.y === l.y && i.w === l.w && l.h === i.h
-            )?.type || ""
-          : "";
-
       const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === l.i);
 
       const selectedButtonStyles =
@@ -99,25 +104,25 @@ export default class ToolboxLayout extends React.Component {
           }}
         >
           <span style={{ position: "absolute", top: 5, left: 5 }}>
-            {type === "config" ? (
+            {BUTTON_CONFIG.type === "config" ? (
               <Tooltip title="Configuration">
                 <span>
                   <Tune style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : type === "up" ? (
+            ) : BUTTON_CONFIG.type === "up" ? (
               <Tooltip title="Load Up">
                 <span>
                   <KeyboardArrowUp style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : type === "down" ? (
+            ) : BUTTON_CONFIG.type === "down" ? (
               <Tooltip title="Load Down">
                 <span>
                   <KeyboardArrowDown style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : type === "toggle" ? (
+            ) : BUTTON_CONFIG.type === "toggle" ? (
               <Tooltip title="Load Toggle">
                 <span>
                   <ToggleOn style={{ opacity: "0.3" }} />
@@ -227,6 +232,21 @@ export default class ToolboxLayout extends React.Component {
     );
   };
 
+  handleLoadActionChange = (e) => {
+    this.setState((lastState) => {
+      const buttonIndex = lastState.buttonConfig.findIndex(
+        (b) => b.i === this.state.selectedButton
+      );
+      const buttonConfig = [...lastState.buttonConfig];
+
+      buttonConfig[buttonIndex] = {
+        ...buttonConfig[buttonIndex],
+        type: e.target.value,
+      };
+      return { buttonConfig: buttonConfig };
+    });
+  };
+
   handleButtonLightTypeChange = (e) => {
     this.setState((lastState) => {
       const buttonIndex = lastState.buttonConfig.findIndex(
@@ -311,41 +331,163 @@ export default class ToolboxLayout extends React.Component {
       (el) => el.i === this.state.selectedButton
     );
 
+    let LED_ARRAY = new Array(SELECTED_BUTTON?.w || 1);
+    LED_ARRAY.fill(1);
+    LED_ARRAY = LED_ARRAY.map(
+      (i, index) => SELECTED_BUTTON?.y * 2 + SELECTED_BUTTON?.x + index + 1
+    );
+
     return (
-      <div className="calculator-root">
-        <div>
-          <div className="lightswitch">
-            <div
-              style={{
-                height: "302px",
-                width: "141px",
-                background: "#1e1d1d",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <ReactGridLayout
-                {...this.props}
-                layout={this.state.layout}
-                onLayoutChange={this.onLayoutChange}
-                measureBeforeMount={false}
-                useCSSTransforms={this.state.mounted}
-                compactType={"vertical"}
-                preventCollision={false}
-                isBounded={false}
-                autoSize={false}
-                cols={2}
-                width={141}
-                margin={[2, 2]}
-                rowHeight={73}
-                onDragStart={(a, b) => {
-                  this.setState({ selectedButton: b.i });
+      <div id="root">
+        <div className="calculator-root">
+          <div>
+            <div className="lightswitch">
+              <div
+                style={{
+                  height: "302px",
+                  width: "141px",
+                  background: "#1e1d1d",
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
-                {this.generateDOM()}
-              </ReactGridLayout>
+                <ReactGridLayout
+                  {...this.props}
+                  layout={this.state.layout}
+                  onLayoutChange={this.onLayoutChange}
+                  measureBeforeMount={false}
+                  useCSSTransforms={this.state.mounted}
+                  compactType={"vertical"}
+                  preventCollision={false}
+                  isBounded={false}
+                  autoSize={false}
+                  cols={2}
+                  width={141}
+                  margin={[2, 2]}
+                  rowHeight={73}
+                  onDragStart={(a, b) => {
+                    this.setState({ selectedButton: b.i });
+                  }}
+                >
+                  {this.generateDOM()}
+                </ReactGridLayout>
+              </div>
             </div>
           </div>
+          <Paper elevation={2} className="areaConfigurationWrapper">
+            {!this.state.selectedButton && (
+              <div
+                style={{
+                  height: 400,
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="body2" color="textSecondary">
+                  Select a button to configure
+                </Typography>
+              </div>
+            )}
+            {this.state.selectedButton && (
+              <Collapse in={Boolean(this.state.selectedButton)} unmountOnExit>
+                <Typography color="textPrimary" gutterBottom>
+                  Button Area {SELECTED_BUTTON?.y * 2 + SELECTED_BUTTON?.x + 1}{" "}
+                  Configuration
+                </Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="loadActionLabel">Load Action</InputLabel>
+                  <Select
+                    labelId="loadActionLabel"
+                    id="loadAction"
+                    value={SELECTED_BUTTON_META.type || "none"}
+                    label="Button Load Action"
+                    onChange={this.handleLoadActionChange}
+                    size="sm"
+                  >
+                    <MenuItem value="none">None</MenuItem>
+                    <MenuItem value="up">Up</MenuItem>
+                    <MenuItem value="down">Down</MenuItem>
+                    <MenuItem value="toggle">Toggle</MenuItem>
+                    <MenuItem value="config">Config</MenuItem>
+                  </Select>
+                </FormControl>
+                <Collapse in={SELECTED_BUTTON_META?.buttonLightType === 0}>
+                  <TextField
+                    label="Engraved Text"
+                    value={SELECTED_BUTTON_META?.text}
+                    onChange={this.setEngravedButtonText}
+                    helperText="This is only for visualization purposes."
+                    size="small"
+                  />
+                </Collapse>
+                {LED_ARRAY.map((i, index, a) => (
+                  <div key={i}>
+                    <Typography color="textSecondary" variant="caption">
+                      {a.length > 1 ? (index == 0 ? "Left" : "Right") : ""} LED
+                      Configuration
+                    </Typography>
+                    <div>
+                      <FormControl>
+                        {/* <FormLabel id="button-type-picker">
+                          Button Type
+                        </FormLabel> */}
+                        <RadioGroup
+                          defaultValue="Text"
+                          name="button-type-group"
+                          row
+                          onChange={this.handleButtonLightTypeChange}
+                          value={SELECTED_BUTTON_META?.buttonLightType}
+                        >
+                          <FormControlLabel
+                            value={0}
+                            control={<Radio />}
+                            label="Text"
+                            style={{ color: "white" }}
+                          />
+                          <FormControlLabel
+                            value={1}
+                            control={<Radio />}
+                            label="Status"
+                            style={{ color: "white" }}
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl>
+                        <FormLabel id="indicator-type-picker">
+                          Indicate Load Status
+                        </FormLabel>
+                        <RadioGroup
+                          aria-labelledby="indicator-type-picker"
+                          defaultValue="Text"
+                          name="indicator-type-group"
+                          row
+                          onChange={this.handleLoadIndicatorChange}
+                          value={SELECTED_BUTTON_META?.indicator}
+                        >
+                          <FormControlLabel
+                            value={0}
+                            control={<Radio />}
+                            label="No"
+                            style={{ color: "white" }}
+                          />
+                          <FormControlLabel
+                            value={1}
+                            control={<Radio />}
+                            label="Yes"
+                            style={{ color: "white" }}
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    </div>
+                  </div>
+                ))}
+              </Collapse>
+            )}
+          </Paper>
         </div>
         <div className="parameterWrapper">
           <TextField
@@ -354,70 +496,6 @@ export default class ToolboxLayout extends React.Component {
             readOnly={true}
             fullWidth
           />
-          {this.state.selectedButton && (
-            <Collapse in={Boolean(this.state.selectedButton)} unmountOnExit>
-              <Typography color="textPrimary">
-                Button Area {SELECTED_BUTTON?.y * 2 + SELECTED_BUTTON?.x + 1}{" "}
-                Configuration
-              </Typography>
-              <FormControl>
-                <FormLabel id="button-type-picker">Button Type</FormLabel>
-                <RadioGroup
-                  defaultValue="Text"
-                  name="button-type-group"
-                  row
-                  onChange={this.handleButtonLightTypeChange}
-                  value={SELECTED_BUTTON_META?.buttonLightType}
-                >
-                  <FormControlLabel
-                    value={0}
-                    control={<Radio />}
-                    label="Text"
-                    style={{ color: "white" }}
-                  />
-                  <FormControlLabel
-                    value={1}
-                    control={<Radio />}
-                    label="Status"
-                    style={{ color: "white" }}
-                  />
-                </RadioGroup>
-              </FormControl>
-              <Collapse in={SELECTED_BUTTON_META?.buttonLightType === 0}>
-                <TextField
-                  label="Engraved Text"
-                  value={SELECTED_BUTTON_META?.text}
-                  onChange={this.setEngravedButtonText}
-                  helperText="This is only for visualization purposes."
-                  size="small"
-                />
-              </Collapse>
-              <FormControl>
-                <FormLabel id="indicator-type-picker">Load Indicator</FormLabel>
-                <RadioGroup
-                  aria-labelledby="indicator-type-picker"
-                  defaultValue="Text"
-                  name="indicator-type-group"
-                  row
-                  onChange={this.handleLoadIndicatorChange}
-                  value={SELECTED_BUTTON_META?.indicator}
-                >
-                  <FormControlLabel
-                    value={0}
-                    control={<Radio />}
-                    label="Text"
-                    style={{ color: "white" }}
-                  />
-                  <FormControlLabel
-                    value={1}
-                    control={<Radio />}
-                    label="Status"
-                    style={{ color: "white" }}
-                  />
-                </RadioGroup>
-              </FormControl>
-            </Collapse>
-          )}
           <TextField
             label="Status\Text (Parameter 171)"
             value={this.getStatusTextLightLayoutValue}

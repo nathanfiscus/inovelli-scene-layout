@@ -7,7 +7,7 @@ export default function LoadLevelIndicator() {
       style={{
         position: "absolute",
         top: 10,
-        bottom: 20,
+        height: 40,
         right: 8,
         width: 4,
         background: "green",
