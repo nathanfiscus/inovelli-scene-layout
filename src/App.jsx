@@ -8,7 +8,7 @@ import {
   Tune,
 } from "@mui/icons-material";
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
-import Validlayout from "./layouts.json";
+import ValidLayouts from "./layouts.json";
 import {
   Collapse,
   FormControl,
@@ -22,13 +22,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
   Paper,
 } from "@mui/material";
 import LoadLevelIndicator from "./LoadLevelIndicator.jsx";
 import TextStatus from "./TextStatus.jsx";
-import { arrayToInt, byteArrayToLong } from "./utils.js";
-import { light } from "@mui/material/styles/createPalette.js";
+import { arrayToInt } from "./utils.js";
 
 export default class ToolboxLayout extends React.Component {
   static defaultProps = {
@@ -49,8 +47,9 @@ export default class ToolboxLayout extends React.Component {
       type: "none",
       text: "",
     })),
-    ledConfig: this.props.initialLayout.map((i) => ({
-      i: i.i,
+    ledConfig: this.props.initialLayout.map((i, area) => ({
+      i: i,
+      area: area,
       buttonLightType: 0,
       indicator: 0,
       text: "",
@@ -64,18 +63,19 @@ export default class ToolboxLayout extends React.Component {
   componentDidUpdate(prevProps, prevState) {
     //Determine layout match
     if (prevState.layout !== this.state.layout) {
-      const SELECTED_LAYOUT = Validlayout.findIndex((layout) => {
+      const SELECTED_LAYOUT = ValidLayouts.findIndex((layout) => {
         return (
+          layout.length > 0 &&
           layout.length ===
-          layout.filter((button) =>
-            this.state.layout.find(
-              (i) =>
-                i.x === button.x &&
-                i.y === button.y &&
-                i.h === button.h &&
-                i.w === button.w
-            )
-          ).length
+            layout.filter((button) =>
+              this.state.layout.find(
+                (i) =>
+                  i.x === button.x &&
+                  i.y === button.y &&
+                  i.h === button.h &&
+                  i.w === button.w
+              )
+            ).length
         );
       });
       this.setState({ selectedLayout: SELECTED_LAYOUT });
@@ -86,10 +86,23 @@ export default class ToolboxLayout extends React.Component {
     return _.map(this.state.layout, (l) => {
       const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === l.i);
 
+      const LED_AREA_LEFT = BUTTON_CONFIG.y * 2 + BUTTON_CONFIG.x + 1;
+      const LED_AREA_RIGHT = BUTTON_CONFIG.w === 2 ? LED_AREA_LEFT + 1 : -1;
+
+      const LED_CONFIG_PRIMARY = this.state.ledConfig[LED_AREA_LEFT];
+      const LED_CONFIG_SECONDARY = this.state.ledConfig[LED_AREA_RIGHT] || {};
+
       const selectedButtonStyles =
         l.i === this.state.selectedButton
           ? { boxShadow: "0px 0px 5px 1px #ff0000" }
           : {};
+
+      const type =
+        this.state.selectedLayout > -1
+          ? ValidLayouts[this.state.selectedLayout].find(
+              (i) => i.x === l.x && i.y === l.y && i.w === l.w && l.h === i.h
+            )?.type || ""
+          : "";
 
       return (
         <div
@@ -104,25 +117,25 @@ export default class ToolboxLayout extends React.Component {
           }}
         >
           <span style={{ position: "absolute", top: 5, left: 5 }}>
-            {BUTTON_CONFIG.type === "config" ? (
+            {type === "config" ? (
               <Tooltip title="Configuration">
                 <span>
                   <Tune style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : BUTTON_CONFIG.type === "up" ? (
-              <Tooltip title="Load Up">
+            ) : type === "up" ? (
+              <Tooltip title="Config Up">
                 <span>
                   <KeyboardArrowUp style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : BUTTON_CONFIG.type === "down" ? (
-              <Tooltip title="Load Down">
+            ) : type === "down" ? (
+              <Tooltip title="Config Down">
                 <span>
                   <KeyboardArrowDown style={{ opacity: "0.3" }} />
                 </span>
               </Tooltip>
-            ) : BUTTON_CONFIG.type === "toggle" ? (
+            ) : type === "toggle" ? (
               <Tooltip title="Load Toggle">
                 <span>
                   <ToggleOn style={{ opacity: "0.3" }} />
@@ -132,10 +145,13 @@ export default class ToolboxLayout extends React.Component {
               ""
             )}
           </span>
-          {BUTTON_CONFIG?.buttonLightType === 0 && (
+          {LED_CONFIG_PRIMARY?.buttonLightType === 0 && (
             <TextStatus text={BUTTON_CONFIG.text} />
           )}
-          {BUTTON_CONFIG?.buttonLightType === 1 && <LoadLevelIndicator />}
+          {(LED_AREA_RIGHT !== -1 ? LED_CONFIG_PRIMARY : LED_CONFIG_SECONDARY)
+            ?.buttonLightType === 1 && (
+            <LoadLevelIndicator right={l.w === 1 ? l.x === 1 : true} />
+          )}
         </div>
       );
     });
@@ -410,7 +426,6 @@ export default class ToolboxLayout extends React.Component {
                     <MenuItem value="up">Up</MenuItem>
                     <MenuItem value="down">Down</MenuItem>
                     <MenuItem value="toggle">Toggle</MenuItem>
-                    <MenuItem value="config">Config</MenuItem>
                   </Select>
                 </FormControl>
                 <Collapse in={SELECTED_BUTTON_META?.buttonLightType === 0}>
@@ -443,7 +458,7 @@ export default class ToolboxLayout extends React.Component {
                           <FormControlLabel
                             value={0}
                             control={<Radio />}
-                            label="Text"
+                            label={index !== 0 ? "None" : "Text"}
                             style={{ color: "white" }}
                           />
                           <FormControlLabel
