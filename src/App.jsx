@@ -23,10 +23,13 @@ import {
   Select,
   MenuItem,
   Paper,
+  AppBar,
+  Toolbar,
 } from "@mui/material";
 import LoadLevelIndicator from "./LoadLevelIndicator.jsx";
 import TextStatus from "./TextStatus.jsx";
 import { arrayToInt } from "./utils.js";
+import logo from "./assets/inovelli.svg";
 
 export default class ToolboxLayout extends React.Component {
   static defaultProps = {
@@ -42,17 +45,14 @@ export default class ToolboxLayout extends React.Component {
     layout: this.props.initialLayout,
     buttonConfig: this.props.initialLayout.map((i) => ({
       i: i.i,
-      buttonLightType: 0,
-      indicator: 0,
       type: "none",
       text: "",
-    })),
-    ledConfig: this.props.initialLayout.map((i, area) => ({
-      i: i,
-      area: area,
-      buttonLightType: 0,
-      indicator: 0,
-      text: "",
+      ledConfig: [
+        {
+          type: 0,
+          loadIndicator: 0,
+        },
+      ],
     })),
   };
 
@@ -86,11 +86,8 @@ export default class ToolboxLayout extends React.Component {
     return _.map(this.state.layout, (l) => {
       const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === l.i);
 
-      const LED_AREA_LEFT = BUTTON_CONFIG.y * 2 + BUTTON_CONFIG.x + 1;
-      const LED_AREA_RIGHT = BUTTON_CONFIG.w === 2 ? LED_AREA_LEFT + 1 : -1;
-
-      const LED_CONFIG_PRIMARY = this.state.ledConfig[LED_AREA_LEFT];
-      const LED_CONFIG_SECONDARY = this.state.ledConfig[LED_AREA_RIGHT] || {};
+      const LED_CONFIG_PRIMARY = BUTTON_CONFIG.ledConfig[0];
+      const LED_CONFIG_SECONDARY = BUTTON_CONFIG.ledConfig[1] || {};
 
       const selectedButtonStyles =
         l.i === this.state.selectedButton
@@ -118,40 +115,42 @@ export default class ToolboxLayout extends React.Component {
         >
           <span style={{ position: "absolute", top: 5, left: 5 }}>
             {type === "config" ? (
-              <Tooltip title="Configuration">
+              <Tooltip title="Configuration Button">
                 <span>
-                  <Tune style={{ opacity: "0.3" }} />
+                  <Tune style={{ opacity: "0.3", fontSize: "16px" }} />
                 </span>
               </Tooltip>
             ) : type === "up" ? (
               <Tooltip title="Config Up">
                 <span>
-                  <KeyboardArrowUp style={{ opacity: "0.3" }} />
+                  <KeyboardArrowUp
+                    style={{ opacity: "0.3", fontSize: "16px" }}
+                  />
                 </span>
               </Tooltip>
             ) : type === "down" ? (
               <Tooltip title="Config Down">
                 <span>
-                  <KeyboardArrowDown style={{ opacity: "0.3" }} />
+                  <KeyboardArrowDown
+                    style={{ opacity: "0.3", fontSize: "16px" }}
+                  />
                 </span>
               </Tooltip>
             ) : type === "toggle" ? (
               <Tooltip title="Load Toggle">
                 <span>
-                  <ToggleOn style={{ opacity: "0.3" }} />
+                  <ToggleOn style={{ opacity: "0.3", fontSize: "16px" }} />
                 </span>
               </Tooltip>
             ) : (
               ""
             )}
           </span>
-          {LED_CONFIG_PRIMARY?.buttonLightType === 0 && (
+          {LED_CONFIG_PRIMARY?.type === 0 && (
             <TextStatus text={BUTTON_CONFIG.text} />
           )}
-          {(LED_AREA_RIGHT !== -1 ? LED_CONFIG_PRIMARY : LED_CONFIG_SECONDARY)
-            ?.buttonLightType === 1 && (
-            <LoadLevelIndicator right={l.w === 1 ? l.x === 1 : true} />
-          )}
+          {(l.w !== 2 ? LED_CONFIG_PRIMARY : LED_CONFIG_SECONDARY)?.type ===
+            1 && <LoadLevelIndicator right={l.w === 1 ? l.x === 1 : true} />}
         </div>
       );
     });
@@ -216,7 +215,28 @@ export default class ToolboxLayout extends React.Component {
     }, []);
 
     const newButtonConfig = this.state.buttonConfig.reduce((p, c) => {
-      if (layout.find((el) => el.i === c.i)) {
+      const BUTTON = layout.find((el) => el.i === c.i);
+      if (BUTTON) {
+        if (BUTTON.w === 2 && c.ledConfig.length === 1) {
+          const newLEDConfig = {};
+          newLEDConfig.type = c.ledConfig[0].type;
+          newLEDConfig.loadIndicator = c.ledConfig[0].loadIndicator;
+          if (newLEDConfig.type === 1) {
+            c.ledConfig[0].type = 0;
+          }
+          c.ledConfig.push(newLEDConfig);
+        }
+        //Merge configs to one
+        if (BUTTON.w === 1 && c.ledConfig.length === 2) {
+          const newLEDConfig = {
+            type: BUTTON.text ? c.ledConfig[1].type : c.ledConfig[0].type,
+            loadIndicator:
+              c.ledConfig[0].loadIndicator || c.ledConfig[1].loadIndicator
+                ? 1
+                : 0,
+          };
+          c.ledConfig = [newLEDConfig];
+        }
         p.push(c);
       }
       return p;
@@ -237,9 +257,14 @@ export default class ToolboxLayout extends React.Component {
             ...this.state.buttonConfig,
             ...itemsToAdd.map((l) => ({
               i: l.i,
-              buttonLightType: 0,
-              indicator: 0,
+              type: "none",
               text: "",
+              ledConfig: [
+                {
+                  type: 0,
+                  loadIndicator: 0,
+                },
+              ],
             })),
           ];
           this.setState({ layout: newLayout, buttonConfig: newButtonConfig });
@@ -263,31 +288,31 @@ export default class ToolboxLayout extends React.Component {
     });
   };
 
-  handleButtonLightTypeChange = (e) => {
+  handleButtonLightTypeChange = (i) => (e) => {
     this.setState((lastState) => {
       const buttonIndex = lastState.buttonConfig.findIndex(
         (b) => b.i === this.state.selectedButton
       );
       const buttonConfig = [...lastState.buttonConfig];
 
-      buttonConfig[buttonIndex] = {
-        ...buttonConfig[buttonIndex],
-        buttonLightType: parseInt(e.target.value),
+      buttonConfig[buttonIndex].ledConfig[i] = {
+        ...buttonConfig[buttonIndex].ledConfig[i],
+        type: parseInt(e.target.value),
       };
       return { buttonConfig };
     });
   };
 
-  handleLoadIndicatorChange = (e) => {
+  handleLoadIndicatorChange = (i) => (e) => {
     this.setState((lastState) => {
       const buttonIndex = lastState.buttonConfig.findIndex(
         (b) => b.i === this.state.selectedButton
       );
       const buttonConfig = [...lastState.buttonConfig];
 
-      buttonConfig[buttonIndex] = {
-        ...buttonConfig[buttonIndex],
-        indicator: parseInt(e.target.value),
+      buttonConfig[buttonIndex].ledConfig[i] = {
+        ...buttonConfig[buttonIndex].ledConfig[i],
+        loadIndicator: parseInt(e.target.value),
       };
       return { buttonConfig: buttonConfig };
     });
@@ -311,11 +336,13 @@ export default class ToolboxLayout extends React.Component {
   get getStatusTextLightLayoutValue() {
     const value = this.state.layout.reduce(
       (p, c) => {
-        const position = c.y * 2 + c.x;
-        const value =
-          this.state.buttonConfig.find((b) => b.i === c.i)?.buttonLightType ||
-          0;
-        p[position] = value;
+        const position = c.x * 2 + c.y;
+        const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
+
+        p[position] = BUTTON_CONFIG.ledConfig[0].type;
+        if (BUTTON_CONFIG.ledConfig.length === 2) {
+          p[position + 1] = BUTTON_CONFIG.ledConfig[1].type;
+        }
         return p;
       },
       [0, 0, 0, 0, 0, 0, 0, 0]
@@ -328,9 +355,12 @@ export default class ToolboxLayout extends React.Component {
     const value = this.state.layout.reduce(
       (p, c) => {
         const position = c.x * 2 + c.y;
-        const value =
-          this.state.buttonConfig.find((b) => b.i === c.i)?.indicator || 0;
-        p[position] = value;
+        const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
+
+        p[position] = BUTTON_CONFIG.ledConfig[0].loadIndicator;
+        if (BUTTON_CONFIG.ledConfig.length === 2) {
+          p[position + 1] = BUTTON_CONFIG.ledConfig[1].loadIndicator;
+        }
         return p;
       },
       [0, 0, 0, 0, 0, 0, 0, 0]
@@ -339,9 +369,45 @@ export default class ToolboxLayout extends React.Component {
     return arrayToInt(value);
   }
 
+  get getLoadControlValue() {
+    const value = this.state.layout.reduce((p, c) => {
+      const position = c.x * 2 + c.y;
+      const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
+
+      let multiplier = 0;
+      switch (BUTTON_CONFIG.type) {
+        case "toggle":
+          multiplier = 256;
+          break;
+        case "down":
+          multiplier = 16;
+          break;
+        case "up":
+          multiplier = 1;
+          break;
+        default:
+          multiplier = 0;
+          break;
+      }
+
+      return p + position * multiplier;
+    }, 0);
+
+    return value;
+  }
+
   render() {
     const SELECTED_BUTTON = this.state.layout.find(
       (el) => el.i === this.state.selectedButton
+    );
+    const UP_LOAD_BUTTON = this.state.buttonConfig.find(
+      (el) => el.type === "up"
+    );
+    const DOWN_LOAD_BUTTON = this.state.buttonConfig.find(
+      (el) => el.type === "down"
+    );
+    const TOGGLE_LOAD_BUTTON = this.state.buttonConfig.find(
+      (el) => el.type === "toggle"
     );
     const SELECTED_BUTTON_META = this.state.buttonConfig.find(
       (el) => el.i === this.state.selectedButton
@@ -355,6 +421,18 @@ export default class ToolboxLayout extends React.Component {
 
     return (
       <div id="root">
+        <AppBar style={{ background: "black" }}>
+          <Toolbar style={{ alignItems: "center", justifyContent: "center" }}>
+            <img src={logo} style={{ height: 32 }} />
+            <Typography>
+              <span style={{ fontSize: 32, letterSpacing: -8 }}> ::</span>
+            </Typography>
+            <Typography style={{ marginLeft: 10, marginTop: 7, fontSize: 20 }}>
+              Scene Layout Calculator
+            </Typography>
+          </Toolbar>
+        </AppBar>
+
         <div className="calculator-root">
           <div>
             <div className="lightswitch">
@@ -408,11 +486,15 @@ export default class ToolboxLayout extends React.Component {
             )}
             {this.state.selectedButton && (
               <Collapse in={Boolean(this.state.selectedButton)} unmountOnExit>
-                <Typography color="textPrimary" gutterBottom>
+                <Typography
+                  color="textPrimary"
+                  gutterBottom
+                  style={{ marginBottom: 16, textAlign: "center" }}
+                >
                   Button Area {SELECTED_BUTTON?.y * 2 + SELECTED_BUTTON?.x + 1}{" "}
                   Configuration
                 </Typography>
-                <FormControl fullWidth>
+                <FormControl fullWidth size="sm" style={{ marginBottom: 16 }}>
                   <InputLabel id="loadActionLabel">Load Action</InputLabel>
                   <Select
                     labelId="loadActionLabel"
@@ -423,37 +505,72 @@ export default class ToolboxLayout extends React.Component {
                     size="sm"
                   >
                     <MenuItem value="none">None</MenuItem>
-                    <MenuItem value="up">Up</MenuItem>
-                    <MenuItem value="down">Down</MenuItem>
-                    <MenuItem value="toggle">Toggle</MenuItem>
+                    <MenuItem
+                      value="up"
+                      disabled={
+                        UP_LOAD_BUTTON && SELECTED_BUTTON.i !== UP_LOAD_BUTTON.i
+                      }
+                    >
+                      Up
+                    </MenuItem>
+                    <MenuItem
+                      value="down"
+                      disabled={
+                        DOWN_LOAD_BUTTON &&
+                        SELECTED_BUTTON.i !== DOWN_LOAD_BUTTON.i
+                      }
+                    >
+                      Down
+                    </MenuItem>
+                    <MenuItem
+                      value="toggle"
+                      disabled={
+                        TOGGLE_LOAD_BUTTON &&
+                        SELECTED_BUTTON.i !== TOGGLE_LOAD_BUTTON.i
+                      }
+                    >
+                      Toggle
+                    </MenuItem>
                   </Select>
                 </FormControl>
-                <Collapse in={SELECTED_BUTTON_META?.buttonLightType === 0}>
+                <Collapse in={SELECTED_BUTTON_META?.ledConfig[0].type === 0}>
                   <TextField
                     label="Engraved Text"
                     value={SELECTED_BUTTON_META?.text}
                     onChange={this.setEngravedButtonText}
                     helperText="This is only for visualization purposes."
                     size="small"
+                    fullWidth
                   />
                 </Collapse>
                 {LED_ARRAY.map((i, index, a) => (
                   <div key={i}>
-                    <Typography color="textSecondary" variant="caption">
+                    <Typography
+                      variant="body1"
+                      style={{
+                        marginTop: 24,
+                        textAlign: "center",
+                        marginBottom: 8,
+                      }}
+                    >
                       {a.length > 1 ? (index == 0 ? "Left" : "Right") : ""} LED
                       Configuration
                     </Typography>
                     <div>
-                      <FormControl>
-                        {/* <FormLabel id="button-type-picker">
-                          Button Type
-                        </FormLabel> */}
+                      <FormControl fullWidth>
+                        <FormLabel
+                          id="button-type-picker"
+                          component={Typography}
+                          variant="caption"
+                        >
+                          LED Type
+                        </FormLabel>
                         <RadioGroup
                           defaultValue="Text"
                           name="button-type-group"
                           row
-                          onChange={this.handleButtonLightTypeChange}
-                          value={SELECTED_BUTTON_META?.buttonLightType}
+                          onChange={this.handleButtonLightTypeChange(index)}
+                          value={SELECTED_BUTTON_META.ledConfig[index].type}
                         >
                           <FormControlLabel
                             value={0}
@@ -480,8 +597,10 @@ export default class ToolboxLayout extends React.Component {
                           defaultValue="Text"
                           name="indicator-type-group"
                           row
-                          onChange={this.handleLoadIndicatorChange}
-                          value={SELECTED_BUTTON_META?.indicator}
+                          onChange={this.handleLoadIndicatorChange(index)}
+                          value={
+                            SELECTED_BUTTON_META.ledConfig[index]?.loadIndicator
+                          }
                         >
                           <FormControlLabel
                             value={0}
@@ -525,7 +644,7 @@ export default class ToolboxLayout extends React.Component {
           />
           <TextField
             label="Load Button Assignment (Parameter 175)"
-            value={0}
+            value={this.getLoadControlValue}
             readOnly={true}
             fullWidth
           />

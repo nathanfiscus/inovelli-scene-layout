@@ -12,6 +12,10 @@ const theme = createTheme({
     mode: "dark",
     text: { primary: "#ffffff", secondary: "rgba(255, 255, 255, 0.7)" },
   },
+  typography: {
+    fontFamily: '"Space Mono", sans-serif',
+    fontSize: 13,
+  },
 });
 
 createRoot(document.getElementById("root")).render(
