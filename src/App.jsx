@@ -101,6 +101,8 @@ export default class ToolboxLayout extends React.Component {
             )?.type || ""
           : "";
 
+      const right = l.w === 1 ? l.x === 1 : true;
+
       return (
         <div
           key={l.i}
@@ -113,7 +115,14 @@ export default class ToolboxLayout extends React.Component {
             ...selectedButtonStyles,
           }}
         >
-          <span style={{ position: "absolute", top: 5, left: 5 }}>
+          <span
+            style={{
+              position: "absolute",
+              top: 5,
+              left: right ? 5 : undefined,
+              right: right ? undefined : 5,
+            }}
+          >
             {type === "config" ? (
               <Tooltip title="Configuration Button">
                 <span>
@@ -150,7 +159,7 @@ export default class ToolboxLayout extends React.Component {
             <TextStatus text={BUTTON_CONFIG.text} />
           )}
           {(l.w !== 2 ? LED_CONFIG_PRIMARY : LED_CONFIG_SECONDARY)?.type ===
-            1 && <LoadLevelIndicator right={l.w === 1 ? l.x === 1 : true} />}
+            1 && <LoadLevelIndicator right={right} />}
         </div>
       );
     });
