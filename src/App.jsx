@@ -87,9 +87,12 @@ export default class ToolboxLayout extends React.Component {
             ).length
         );
       });
-      this.setState({ selectedLayout: SELECTED_LAYOUT });
+      this.setState({ selectedLayout: SELECTED_LAYOUT }, () => {
+        localStorage.setItem("state", JSON.stringify(this.state));
+      });
+    } else {
+      localStorage.setItem("state", JSON.stringify(this.state));
     }
-    localStorage.setItem("state", JSON.stringify(this.state));
   }
 
   generateDOM() {
