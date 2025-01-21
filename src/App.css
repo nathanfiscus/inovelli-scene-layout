@@ -27,7 +27,7 @@ body {
 
 .calculator-root > div:last-child {
   margin-left: 16px;
-  width: 300px;
+  width: 330px;
 }
 
 .control-wrapper {
@@ -48,7 +48,7 @@ body {
 
 .parameterWrapper {
   align-items: center;
-  /* justify-content: center; */
+  justify-content: center;
   display: flex;
   padding: 16px;
   flex-wrap: wrap;

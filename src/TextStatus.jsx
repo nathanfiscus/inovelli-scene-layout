@@ -18,7 +18,12 @@ export default function TextStatus(props) {
     >
       <Typography
         variant="caption"
-        style={{ userSelect: "none", color: props.color || "blue" }}
+        style={{
+          userSelect: "none",
+          color: props.color || "blue",
+          fontSize: "13px",
+          fontFamily: "sans-serif",
+        }}
       >
         {TEXT}
       </Typography>
