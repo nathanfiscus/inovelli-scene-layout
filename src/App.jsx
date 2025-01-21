@@ -39,22 +39,31 @@ export default class ToolboxLayout extends React.Component {
     initialLayout: generateLayout(),
   };
 
-  state = {
-    compactType: "vertical",
-    mounted: false,
-    layout: this.props.initialLayout,
-    buttonConfig: this.props.initialLayout.map((i) => ({
-      i: i.i,
-      type: "none",
-      text: "",
-      ledConfig: [
-        {
-          type: 0,
-          loadIndicator: 0,
-        },
-      ],
-    })),
-  };
+  constructor(props) {
+    super(props);
+    const prevState = JSON.parse(localStorage.getItem("state"));
+    if (prevState) {
+      this.state = prevState;
+    } else {
+      this.state = {
+        version: 1,
+        compactType: "vertical",
+        mounted: false,
+        layout: props.initialLayout,
+        buttonConfig: props.initialLayout.map((i) => ({
+          i: i.i,
+          type: "none",
+          text: "",
+          ledConfig: [
+            {
+              type: 0,
+              loadIndicator: 0,
+            },
+          ],
+        })),
+      };
+    }
+  }
 
   componentDidMount() {
     this.setState({ mounted: true });
@@ -80,6 +89,7 @@ export default class ToolboxLayout extends React.Component {
       });
       this.setState({ selectedLayout: SELECTED_LAYOUT });
     }
+    localStorage.setItem("state", JSON.stringify(this.state));
   }
 
   generateDOM() {
@@ -345,7 +355,7 @@ export default class ToolboxLayout extends React.Component {
   get getStatusTextLightLayoutValue() {
     const value = this.state.layout.reduce(
       (p, c) => {
-        const position = c.x * 2 + c.y;
+        const position = c.y * 2 + c.x;
         const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
 
         p[position] = BUTTON_CONFIG.ledConfig[0].type;
@@ -363,7 +373,7 @@ export default class ToolboxLayout extends React.Component {
   get getIndicatorLightLayoutValue() {
     const value = this.state.layout.reduce(
       (p, c) => {
-        const position = c.x * 2 + c.y;
+        const position = c.y * 2 + c.x;
         const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
 
         p[position] = BUTTON_CONFIG.ledConfig[0].loadIndicator;
@@ -380,7 +390,7 @@ export default class ToolboxLayout extends React.Component {
 
   get getLoadControlValue() {
     const value = this.state.layout.reduce((p, c) => {
-      const position = c.x * 2 + c.y;
+      const position = c.y * 2 + c.x;
       const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
 
       let multiplier = 0;

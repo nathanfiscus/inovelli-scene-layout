@@ -24,6 +24,7 @@ body {
   align-items: center;
   margin-top: 20px;
 }
+
 .calculator-root > div:last-child {
   margin-left: 16px;
   width: 300px;
