@@ -412,7 +412,7 @@ export default class ToolboxLayout extends React.Component {
           break;
       }
 
-      return p + position * multiplier;
+      return p + (position + 1) * multiplier; //offset position to 1
     }, 0);
 
     return value;
