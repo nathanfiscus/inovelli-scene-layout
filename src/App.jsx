@@ -393,7 +393,7 @@ export default class ToolboxLayout extends React.Component {
 
   get getLoadControlValue() {
     const value = this.state.layout.reduce((p, c) => {
-      const position = c.y * 2 + c.x;
+      const position = c.y * 2 + (c.w == 2 ? 1 : c.x); // load controls for wide buttons are based on the upper right position.
       const BUTTON_CONFIG = this.state.buttonConfig.find((b) => b.i === c.i);
 
       let multiplier = 0;
