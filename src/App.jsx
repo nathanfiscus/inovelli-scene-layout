@@ -407,6 +407,12 @@ export default class ToolboxLayout extends React.Component {
         case "up":
           multiplier = 1;
           break;
+        case "dimup":
+          multiplier = 4096;
+          break;
+        case "dimdown":
+          multiplier = 65536;
+          break;
         default:
           multiplier = 0;
           break;
@@ -543,6 +549,23 @@ export default class ToolboxLayout extends React.Component {
                       }
                     >
                       Down
+                    </MenuItem>
+                    <MenuItem
+                      value="dimup"
+                      disabled={
+                        UP_LOAD_BUTTON && SELECTED_BUTTON.i !== UP_LOAD_BUTTON.i
+                      }
+                    >
+                      Dim Up
+                    </MenuItem>
+                    <MenuItem
+                      value="dimdown"
+                      disabled={
+                        DOWN_LOAD_BUTTON &&
+                        SELECTED_BUTTON.i !== DOWN_LOAD_BUTTON.i
+                      }
+                    >
+                      Dim Down
                     </MenuItem>
                     <MenuItem
                       value="toggle"
