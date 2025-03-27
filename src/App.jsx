@@ -434,6 +434,12 @@ export default class ToolboxLayout extends React.Component {
     const DOWN_LOAD_BUTTON = this.state.buttonConfig.find(
       (el) => el.type === "down"
     );
+    const DIMUP_LOAD_BUTTON = this.state.buttonConfig.find(
+      (el) => el.type === "dimup"
+    );
+    const DIMDOWN_LOAD_BUTTON = this.state.buttonConfig.find(
+      (el) => el.type === "dimdown"
+    );
     const TOGGLE_LOAD_BUTTON = this.state.buttonConfig.find(
       (el) => el.type === "toggle"
     );
@@ -553,7 +559,7 @@ export default class ToolboxLayout extends React.Component {
                     <MenuItem
                       value="dimup"
                       disabled={
-                        UP_LOAD_BUTTON && SELECTED_BUTTON.i !== UP_LOAD_BUTTON.i
+                        DIMUP_LOAD_BUTTON && SELECTED_BUTTON.i !== DIMUP_LOAD_BUTTON.i
                       }
                     >
                       Dim Up
@@ -561,8 +567,8 @@ export default class ToolboxLayout extends React.Component {
                     <MenuItem
                       value="dimdown"
                       disabled={
-                        DOWN_LOAD_BUTTON &&
-                        SELECTED_BUTTON.i !== DOWN_LOAD_BUTTON.i
+                        DIMDOWN_LOAD_BUTTON &&
+                        SELECTED_BUTTON.i !== DIMDOWN_LOAD_BUTTON.i
                       }
                     >
                       Dim Down
